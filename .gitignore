@@ -1,0 +1,9 @@
+# Dossier entier
+test/
+__pycache__/
+.vscode/
+
+# Fichiers spécifiques
+.env
+*.pyc
+*.log

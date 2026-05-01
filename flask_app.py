@@ -5,7 +5,7 @@ from flask_cors import CORS
 
 import json
 from utility.lookupinjson import get_section
-from RDM import (
+from rdm import (
     Model,
     DistributedLoad,
     PointLoadOnBeam,
@@ -13,6 +13,7 @@ from RDM import (
 )
 from norme.EC3.elu import compression, shear
 import os
+
 #from ressource import sec_list
 
 import hmac
@@ -87,6 +88,7 @@ def health():
 @app.route('/section_steel', methods=["POST"])
 @require_api_key
 def section_steel():
+    print(42)
     try:
         data = request.get_json()
         if isinstance(data, str):
@@ -98,7 +100,12 @@ def section_steel():
         sec = data.get("sec")
         # 1. On définit le chemin absolu vers ton dossier de ressources
         # Cela évite les erreurs "File Not Found"
-        BASE_DIR = os.path.dirname("/home/alex25071/Str-lib/")
+                # ---- Chemin dynamique selon l'environnement ----
+        if os.getenv("FLASK_ENV") == "local":
+            BASE_DIR = "C:/Users/alexa/OneDrive/Programation/Python/Ressource/LIB/Str-lib"
+        else:
+            BASE_DIR = "/home/alex25071/Str-lib"
+
         JSON_PATH = os.path.join(BASE_DIR, "ressource", f"{sec}.json")
         #return JSON_PATH
 
@@ -130,12 +137,11 @@ def section_steel_type():
 
     try:
         section = (
-            "IPE", #need to be after HL
+            "chs",
             "HD",
             "HE",
             "HL",
-
-            "chs", #need to be first
+            "IPE",
             "IPN",
             "Le",
             "Lie",
@@ -160,14 +166,11 @@ def section_steel_type():
 def section_steel_val():
     # 1. On définit le chemin absolu vers ton dossier de ressources
     # Cela évite les erreurs "File Not Found"
-    BASE_DIR = os.path.dirname("/home/alex25071/Str-lib/")
-    JSON_PATH = os.path.join(BASE_DIR, "ressource", "IPE.json")
+    if os.getenv("FLASK_ENV") == "local":
+        BASE_DIR = "C:/Users/alexa/OneDrive/Programation/Python/Ressource/LIB/Str-lib"
+    else:
+        BASE_DIR = "/home/alex25071/Str-lib"
     #return JSON_PATH
-
-    # 2. On charge les données UNE SEULE FOIS au démarrage (plus rapide)
-    with open(JSON_PATH, "r", encoding="utf-8") as f:
-        IPE_DATA = json.load(f)
-    # 1. On accède à la liste qui est derrière la clé "sections"
 
     try:
         # 1. Récupération des données JSON
@@ -179,10 +182,15 @@ def section_steel_val():
             return jsonify({"error": "Aucun JSON reçu"}), 400
 
         # --- Récupération des inputs ---
-        section_name = data.get("section")      # "IPE 80"
-
+        section_name = data.get("section")
+        type_name = data.get("type")      # "IPE 80"
+        JSON_PATH = os.path.join(BASE_DIR, "ressource", f"{type_name}.json")
         # 2. Recherche de la section dans la base de données (ton JSON)
         # On utilise ta fonction de librairie
+            # 2. On charge les données UNE SEULE FOIS au démarrage (plus rapide)
+        with open(JSON_PATH, "r", encoding="utf-8") as f:
+            IPE_DATA = json.load(f)
+        # 1. On accède à la liste qui est derrière la clé "sections"
         section_data = get_section(IPE_DATA, section_name)
 
         if not section_data:
