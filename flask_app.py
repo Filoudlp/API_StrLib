@@ -88,7 +88,6 @@ def health():
 @app.route('/section_steel', methods=["POST"])
 @require_api_key
 def section_steel():
-    print(42)
     try:
         data = request.get_json()
         if isinstance(data, str):
